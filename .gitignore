@@ -1,0 +1,6 @@
+# Generated C++ executables
+main
+clinic
+
+# Generated patient receipts
+receipt_*.txt

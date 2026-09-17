@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareGrid | Clinic schedule</title>
+  <style>
+    :root {
+      --ink: #192b2b;
+      --muted: #6f7e7b;
+      --line: #dce7e2;
+      --paper: #f8faf7;
+      --panel: #ffffff;
+      --mint: #d7f0e3;
+      --mint-deep: #23765a;
+      --coral: #f5c6b8;
+      --coral-deep: #a64d3b;
+      --sun: #f1dda2;
+      --shadow: 0 16px 40px rgba(33, 62, 54, .08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 232px 1fr; }
+    aside { background: #193b37; color: #e8f3ed; padding: 28px 18px; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-size: 20px; font-weight: 750; letter-spacing: -.04em; padding: 0 10px 42px; }
+    .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; color: #193b37; background: var(--sun); border-radius: 9px; font-size: 19px; font-weight: 800; }
+    .nav-label { padding: 0 12px 10px; color: #8fb4a6; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    nav button { width: 100%; border: 0; border-radius: 10px; padding: 12px; margin-bottom: 4px; text-align: left; color: #b7d4c7; background: transparent; }
+    nav button.active, nav button:hover { color: #fff; background: #27564d; }
+    .nav-icon { display: inline-block; width: 24px; color: #a4ceb9; }
+    .side-footer { margin-top: auto; border-top: 1px solid #356258; padding: 18px 10px 0; color: #9cc1b3; font-size: 12px; }
+    main { min-width: 0; padding: 28px 34px 46px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 30px; }
+    .eyebrow { color: var(--mint-deep); text-transform: uppercase; letter-spacing: .13em; font-size: 11px; font-weight: 800; }
+    h1 { font-family: Georgia, serif; font-size: clamp(27px, 3vw, 39px); line-height: 1; letter-spacing: -.04em; margin: 6px 0 0; font-weight: 500; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .search { position: relative; }
+    .search input { width: 245px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 11px 14px 11px 36px; outline-color: var(--mint-deep); }
+    .search span { position: absolute; left: 13px; top: 10px; color: var(--muted); }
+    .primary { border: 0; border-radius: 10px; padding: 12px 16px; background: var(--ink); color: white; font-weight: 700; box-shadow: 0 5px 12px rgba(25,43,43,.14); }
+    .primary:hover { background: #2d4e4b; transform: translateY(-1px); }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 14px; margin-bottom: 26px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 17px 18px; box-shadow: var(--shadow); }
+    .stat .label { color: var(--muted); font-size: 12px; }
+    .stat strong { display: block; margin-top: 4px; font-size: 25px; letter-spacing: -.04em; }
+    .stat small { color: var(--mint-deep); font-size: 11px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 22px; align-items: start; }
+    .calendar-panel, .side-panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .week-tools { display: flex; gap: 5px; align-items: center; }
+    .icon-button { width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; }
+    .icon-button:hover { border-color: var(--mint-deep); background: var(--mint); }
+    .today-button { border: 0; background: var(--mint); color: var(--mint-deep); border-radius: 8px; padding: 8px 11px; font-size: 12px; font-weight: 700; }
+    .calendar { overflow-x: auto; }
+    .week-grid { min-width: 735px; display: grid; grid-template-columns: 62px repeat(5, minmax(125px, 1fr)); }
+    .week-grid > div { border-right: 1px solid #edf2ef; }
+    .day-head { min-height: 61px; padding: 12px 9px; border-bottom: 1px solid var(--line); }
+    .day-head span { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .day-head strong { display: block; margin-top: 3px; font-size: 18px; }
+    .day-head.current { background: #f0f8f4; color: var(--mint-deep); }
+    .time-label { border-bottom: 1px solid #edf2ef; color: var(--muted); font-size: 10px; padding: 12px 6px; text-align: right; }
+    .slot { position: relative; min-height: 72px; padding: 5px; border-bottom: 1px solid #edf2ef; }
+    .slot:hover { background: #fbfdfb; }
+    .appointment { height: 61px; border-left: 4px solid var(--mint-deep); border-radius: 7px; background: var(--mint); padding: 7px 8px; overflow: hidden; cursor: pointer; }
+    .appointment.coral { border-color: var(--coral-deep); background: #fbe2d9; }
+    .appointment .time { color: #527069; font-size: 10px; }
+    .appointment strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+    .appointment small { display: block; color: #527069; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
+    .side-panel { overflow: hidden; }
+    .side-section { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .side-section:last-child { border: 0; }
+    .side-section h3 { margin: 0 0 14px; font-size: 14px; }
+    .doctor { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
+    .doctor-info { display: flex; align-items: center; gap: 9px; }
+    .avatar { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 50%; background: var(--sun); color: #6b591f; font-size: 11px; font-weight: 800; }
+    .doctor-name { font-weight: 650; font-size: 12px; }
+    .doctor-role { display: block; color: var(--muted); font-size: 10px; }
+    .status { font-size: 11px; color: var(--mint-deep); }
+    .status.off { color: var(--coral-deep); }
+    .lookup-result { display: none; margin-top: 12px; border-radius: 9px; background: #f4f8f5; padding: 12px; }
+    .lookup-result.show { display: block; }
+    .result-name { font-weight: 700; }
+    .result-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; margin-bottom: 5px; }
+    .field { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 10px; color: var(--ink); outline-color: var(--mint-deep); }
+    .full { grid-column: 1 / -1; }
+    .helper { color: var(--muted); font-size: 11px; margin: 10px 0 0; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; place-items: center; background: rgba(21, 46, 42, .45); padding: 18px; z-index: 2; }
+    .modal-backdrop.show { display: grid; }
+    .modal { width: min(510px, 100%); max-height: 90vh; overflow: auto; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px rgba(12, 33, 30, .25); }
+    .modal-head { display: flex; justify-content: space-between; padding: 22px 24px; border-bottom: 1px solid var(--line); }
+    .modal-head h2 { margin: 0; font-family: Georgia, serif; font-weight: 500; font-size: 25px; }
+    .modal-body { padding: 22px 24px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+    .secondary { border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; background: #fff; color: var(--ink); font-weight: 650; }
+    .error { display: none; margin-top: 14px; border-radius: 8px; padding: 11px; color: #833b30; background: #fee8e2; font-size: 12px; }
+    .error.show { display: block; }
+    .empty { padding: 22px 0 5px; color: var(--muted); text-align: center; font-size: 12px; }
+    @media (max-width: 1000px) { .app-shell { grid-template-columns: 76px 1fr; } aside { padding: 24px 12px; } .brand { padding: 0 0 42px; justify-content: center; } .brand span:last-child, .nav-label, nav button span:not(.nav-icon), .side-footer { display: none; } nav button { text-align: center; padding: 12px 5px; } .nav-icon { width: auto; } main { padding: 25px 20px; } .workspace { grid-template-columns: 1fr; } .side-panel { display: grid; grid-template-columns: 1fr 1fr; } .side-section { border-bottom: 0; border-right: 1px solid var(--line); } }
+    @media (max-width: 680px) { .app-shell { display: block; } aside { height: auto; padding: 12px 16px; flex-direction: row; align-items: center; gap: 15px; } .brand { padding: 0; margin-right: auto; } nav { display: flex; gap: 3px; } nav button { margin: 0; padding: 9px; } main { padding: 22px 13px; } .topbar { align-items: flex-start; flex-direction: column; margin-bottom: 22px; } .top-actions { width: 100%; } .search, .search input { width: 100%; } .stats { grid-template-columns: 1fr 1fr; gap: 9px; } .stat { padding: 13px; } .stat strong { font-size: 21px; } .side-panel { display: block; } .side-section { border-right: 0; border-bottom: 1px solid var(--line); } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside>
+      <div class="brand"><span class="brand-mark">+</span><span>CareGrid</span></div>
+      <div class="nav-label">Workspace</div>
+      <nav>
+        <button class="active"><span class="nav-icon">▦</span><span>Schedule</span></button>
+        <button id="patientsNav"><span class="nav-icon">♙</span><span>Patients</span></button>
+        <button><span class="nav-icon">▤</span><span>Reports</span></button>
+      </nav>
+      <div class="side-footer">Thursday, October 12<br><strong>Front desk · Main clinic</strong></div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div><div class="eyebrow">Front desk / Today</div><h1>Good morning, Maya</h1></div>
+        <div class="top-actions"><div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Find a patient..." aria-label="Find a patient"></div><button class="primary" id="newAppointment">+ New appointment</button></div>
+      </header>
+      <section class="stats" aria-label="Clinic overview">
+        <div class="stat"><span class="label">Appointments today</span><strong id="todayCount">7</strong><small>Across 3 doctors</small></div>
+        <div class="stat"><span class="label">Open slots</span><strong id="openCount">18</strong><small>Next opening 10:30</small></div>
+        <div class="stat"><span class="label">Waiting room</span><strong>02</strong><small>Average wait 08 min</small></div>
+        <div class="stat"><span class="label">Cancellations</span><strong id="cancelCount">01</strong><small>This week</small></div>
+      </section>
+      <div class="workspace">
+        <section class="calendar-panel">
+          <div class="panel-head"><h2 id="weekTitle">October 9 - 13, 2023</h2><div class="week-tools"><button class="today-button" id="todayButton">Today</button><button class="icon-button" id="prevWeek" aria-label="Previous week">‹</button><button class="icon-button" id="nextWeek" aria-label="Next week">›</button></div></div>
+          <div class="calendar"><div class="week-grid" id="calendarGrid"></div></div>
+        </section>
+        <aside class="side-panel">
+          <section class="side-section"><h3>Doctors on duty</h3><div id="doctorList"></div></section>
+          <section class="side-section"><h3>Find an appointment</h3><label for="lookupInput">Patient name</label><input class="field" id="lookupInput" placeholder="e.g. Jordan Lee"><div class="lookup-result" id="lookupResult"></div><div class="empty" id="lookupEmpty">Search by full or partial name.</div></section>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><h2 id="modalTitle">Book an appointment</h2><button class="icon-button" id="closeModal" aria-label="Close">×</button></div>
+      <div class="modal-body">
+        <form id="appointmentForm">
+          <div class="form-grid">
+            <div class="full"><label for="patientName">Patient name</label><input class="field" id="patientName" required placeholder="Full name"></div>
+            <div><label for="doctorSelect">Doctor</label><select class="field" id="doctorSelect" required></select></div>
+            <div><label for="appointmentDate">Date</label><input class="field" id="appointmentDate" type="date" required></div>
+            <div><label for="startTime">Start time</label><input class="field" id="startTime" type="time" min="08:00" max="17:00" step="1800" required></div>
+            <div><label for="duration">Duration</label><select class="field" id="duration"><option value="30">30 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option></select></div>
+            <div class="full"><label for="appointmentReason">Reason for visit</label><input class="field" id="appointmentReason" placeholder="Optional"></div>
+          </div>
+          <div class="error" id="formError"></div>
+          <p class="helper">A slot is held only after conflict checks pass. Appointments cannot overlap for the same doctor.</p>
+          <div class="modal-actions"><button type="button" class="secondary" id="cancelModal">Cancel</button><button type="submit" class="primary">Book appointment</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    const doctors = [
+      { id: 'patel', name: 'Dr. Anika Patel', role: 'Family medicine', initials: 'AP', available: true },
+      { id: 'chen', name: 'Dr. Marcus Chen', role: 'Internal medicine', initials: 'MC', available: true },
+      { id: 'rivera', name: 'Dr. Sofia Rivera', role: 'Pediatrics', initials: 'SR', available: true }
+    ];
+    let appointments = [
+      { id: 1, patient: 'Jordan Lee', doctor: 'patel', date: '2023-10-12', start: '08:00', duration: 30, reason: 'Follow-up' },
+      { id: 2, patient: 'Amelia Brooks', doctor: 'chen', date: '2023-10-12', start: '08:30', duration: 60, reason: 'Annual physical' },
+      { id: 3, patient: 'Marcus Hill', doctor: 'rivera', date: '2023-10-12', start: '09:00', duration: 30, reason: 'Vaccination' },
+      { id: 4, patient: 'Noah Williams', doctor: 'patel', date: '2023-10-12', start: '09:00', duration: 60, reason: 'Consultation' },
+      { id: 5, patient: 'Priya Shah', doctor: 'chen', date: '2023-10-12', start: '10:00', duration: 30, reason: 'Lab review' },
+      { id: 6, patient: 'Elena Garcia', doctor: 'rivera', date: '2023-10-12', start: '10:30', duration: 30, reason: 'New patient' },
+      { id: 7, patient: 'Theo Martin', doctor: 'patel', date: '2023-10-12', start: '11:00', duration: 60, reason: 'Back pain' },
+      { id: 8, patient: 'Jordan Lee', doctor: 'patel', date: '2023-10-13', start: '09:30', duration: 30, reason: 'Follow-up' },
+      { id: 9, patient: 'Sam Wilson', doctor: 'chen', date: '2023-10-13', start: '13:00', duration: 30, reason: 'Check-in' }
+    ];
+    let weekStart = new Date('2023-10-09T12:00:00');
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+    const $ = id => document.getElementById(id);
+    const dateKey = date => date.toISOString().slice(0, 10);
+    const displayDate = (date, options) => date.toLocaleDateString('en-US', options);
+    const doctorById = id => doctors.find(doctor => doctor.id === id);
+    function minutes(time) { const [hour, minute] = time.split(':').map(Number); return hour * 60 + minute; }
+    function timeLabel(time) { const [hour, minute] = time.split(':').map(Number); const suffix = hour >= 12 ? 'PM' : 'AM'; return `${(hour % 12 || 12)}:${String(minute).padStart(2, '0')} ${suffix}`; }
+    function addMinutes(time, amount) { const total = minutes(time) + amount; return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`; }
+    function renderDoctors() {
+      $('doctorList').innerHTML = doctors.map(doctor => `<div class="doctor"><div class="doctor-info"><span class="avatar">${doctor.initials}</span><div><span class="doctor-name">${doctor.name}</span><span class="doctor-role">${doctor.role}</span></div></div><span class="status ${doctor.available ? '' : 'off'}">${doctor.available ? 'On duty' : 'Away'}</span></div>`).join('');
+      $('doctorSelect').innerHTML = doctors.map(doctor => `<option value="${doctor.id}">${doctor.name}</option>`).join('');
+    }
+    function renderCalendar() {
+      const grid = $('calendarGrid');
+      const days = Array.from({ length: 5 }, (_, index) => { const day = new Date(weekStart); day.setDate(day.getDate() + index); return day; });
+      $('weekTitle').textContent = `${displayDate(days[0], { month: 'long', day: 'numeric' })} - ${displayDate(days[4], { month: 'long', day: 'numeric', year: 'numeric' })}`;
+      grid.innerHTML = '<div></div>' + days.map(day => `<div class="day-head ${dateKey(day) === '2023-10-12' ? 'current' : ''}"><span>${displayDate(day, { weekday: 'short' })}</span><strong>${day.getDate()}</strong></div>`).join('');
+      hours.forEach(hour => {
+        grid.insertAdjacentHTML('beforeend', `<div class="time-label">${timeLabel(hour)}</div>`);
+        days.forEach(day => {
+          const appointment = appointments.find(item => item.date === dateKey(day) && item.start === hour);
+          const doctor = appointment && doctorById(appointment.doctor);
+          grid.insertAdjacentHTML('beforeend', `<div class="slot">${appointment ? `<div class="appointment ${appointment.doctor === 'chen' ? 'coral' : ''}" data-id="${appointment.id}" title="${appointment.reason}"><span class="time">${timeLabel(appointment.start)} · ${appointment.duration} min</span><strong>${appointment.patient}</strong><small>${doctor.name.replace('Dr. ', '')}</small></div>` : ''}</div>`);
+        });
+      });
+      document.querySelectorAll('.appointment').forEach(item => item.addEventListener('click', () => showAppointment(item.dataset.id)));
+      $('todayCount').textContent = appointments.filter(item => item.date === '2023-10-12').length;
+    }
+    function showAppointment(id) {
+      const item = appointments.find(appointment => appointment.id === Number(id));
+      const doctor = doctorById(item.doctor);
+      const cancel = confirm(`${item.patient}\n${doctor.name} · ${timeLabel(item.start)}\n\nCancel this appointment? Cancellations within 24 hours carry a $35 fee.`);
+      if (!cancel) return;
+      const fee = confirm('Was this cancellation made less than 24 hours before the appointment?\n\nChoose OK to apply the $35 late cancellation fee, or Cancel for a free cancellation.');
+      appointments = appointments.filter(appointment => appointment.id !== item.id);
+      $('cancelCount').textContent = String(Number($('cancelCount').textContent) + 1).padStart(2, '0');
+      renderCalendar();
+      alert(fee ? `Appointment cancelled. A $35 late cancellation fee applies to ${item.patient}.` : 'Appointment cancelled with no fee.');
+    }
+    function openModal(prefill = {}) {
+      $('modalBackdrop').classList.add('show');
+      $('appointmentForm').reset();
+      $('doctorSelect').value = prefill.doctor || doctors[0].id;
+      $('appointmentDate').value = prefill.date || '2023-10-12';
+      $('startTime').value = prefill.start || '08:00';
+      $('formError').classList.remove('show');
+      $('patientName').focus();
+    }
+    function closeModal() { $('modalBackdrop').classList.remove('show'); }
+    function findConflict(doctor, date, start, duration) {
+      const startMinute = minutes(start); const endMinute = startMinute + Number(duration);
+      return appointments.find(item => item.doctor === doctor && item.date === date && startMinute < minutes(addMinutes(item.start, item.duration)) && endMinute > minutes(item.start));
+    }
+    $('appointmentForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const details = { patient: $('patientName').value.trim(), doctor: $('doctorSelect').value, date: $('appointmentDate').value, start: $('startTime').value, duration: $('duration').value, reason: $('appointmentReason').value.trim() || 'General visit' };
+      const conflict = findConflict(details.doctor, details.date, details.start, details.duration);
+      if (conflict) { const doctor = doctorById(details.doctor); $('formError').textContent = `That time overlaps ${doctor.name}'s appointment with ${conflict.patient} (${timeLabel(conflict.start)} - ${timeLabel(addMinutes(conflict.start, conflict.duration))}). Choose another time.`; $('formError').classList.add('show'); return; }
+      if (minutes(details.start) + Number(details.duration) > 17 * 60) { $('formError').textContent = 'This appointment would run past the clinic close at 5:00 PM.'; $('formError').classList.add('show'); return; }
+      appointments.push({ ...details, id: Date.now(), duration: Number(details.duration) }); closeModal(); renderCalendar(); alert(`Booked ${details.patient} with ${doctorById(details.doctor).name} at ${timeLabel(details.start)}.`);
+    });
+    $('lookupInput').addEventListener('input', event => {
+      const query = event.target.value.trim().toLowerCase(); const matches = appointments.filter(item => item.patient.toLowerCase().includes(query)); const result = $('lookupResult'); const empty = $('lookupEmpty');
+      if (!query) { result.classList.remove('show'); empty.textContent = 'Search by full or partial name.'; empty.style.display = 'block'; return; }
+      if (!matches.length) { result.classList.remove('show'); empty.textContent = 'No upcoming appointments found.'; empty.style.display = 'block'; return; }
+      empty.style.display = 'none'; result.classList.add('show'); result.innerHTML = matches.map(item => `<div style="margin-bottom:10px"><div class="result-name">${item.patient}</div><div class="result-meta">${displayDate(new Date(`${item.date}T12:00:00`), { weekday: 'short', month: 'short', day: 'numeric' })} at ${timeLabel(item.start)} with ${doctorById(item.doctor).name}</div></div>`).join('');
+    });
+    $('newAppointment').addEventListener('click', () => openModal()); $('closeModal').addEventListener('click', closeModal); $('cancelModal').addEventListener('click', closeModal); $('modalBackdrop').addEventListener('click', event => { if (event.target === $('modalBackdrop')) closeModal(); });
+    $('todayButton').addEventListener('click', () => { weekStart = new Date('2023-10-09T12:00:00'); renderCalendar(); });
+    $('prevWeek').addEventListener('click', () => { weekStart.setDate(weekStart.getDate() - 7); renderCalendar(); }); $('nextWeek').addEventListener('click', () => { weekStart.setDate(weekStart.getDate() + 7); renderCalendar(); });
+    $('patientsNav').addEventListener('click', () => $('lookupInput').focus()); $('searchInput').addEventListener('input', event => { $('lookupInput').value = event.target.value; $('lookupInput').dispatchEvent(new Event('input')); });
+    renderDoctors(); renderCalendar();
+  </script>
+</body>
+</html>
